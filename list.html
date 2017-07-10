@@ -1,0 +1,13 @@
+<html>
+    <head>
+        <title>リストページ</title>
+    </head>
+    <body>
+        <h1>リスト</h1>
+        <ul>
+            {{range .Pages}}
+            <li><a href="/view/{{.}}">{{.}}.txt</li>
+            {{end}}
+        </ul>
+    </body>
+</html>
