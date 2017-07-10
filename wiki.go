@@ -62,8 +62,20 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
-func init() {
+func listHandler(w http.ResponseWriter, r *http.Request) {
+	t := template.Must(template.ParseFiles("list.html"))
+	p := &Page{Title: "テスト", Body: []byte("テスト")}
+	err := t.Execute(w, p)
+	if err != nil {
+		panic(err)
+	}
+}
+
+//func init() {
+func main() {
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
 	http.HandleFunc("/save/", saveHandler)
+	http.HandleFunc("/", listHandler)
+	http.ListenAndServe(":8080", nil)
 }
