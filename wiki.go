@@ -72,9 +72,9 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "edit", p)
 }
 
-func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
 	t := template.Must(template.ParseFiles(tmpl + ".html"))
-	err := t.Execute(w, p)
+	err := t.Execute(w, data)
 	if err != nil {
 		panic(err)
 	}
@@ -89,13 +89,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
-	t := template.Must(template.ParseFiles("list.html"))
 	files := dirwalk("./")
 	pl := &PageList{Pages: files}
-	err := t.Execute(w, pl)
-	if err != nil {
-		panic(err)
-	}
+	renderTemplate(w, "list", pl)
 }
 
 //func init() {
