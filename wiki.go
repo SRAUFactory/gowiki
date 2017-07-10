@@ -31,7 +31,7 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-func dirwalk(dir string) []string {
+func getFileList(dir string) []string {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		panic(err)
@@ -89,7 +89,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
-	files := dirwalk("./")
+	files := getFileList("./")
 	pl := &PageList{Pages: files}
 	renderTemplate(w, "list", pl)
 }
