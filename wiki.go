@@ -94,11 +94,9 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "list", pl)
 }
 
-//func init() {
-func main() {
+func init() {
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
 	http.HandleFunc("/save/", saveHandler)
 	http.HandleFunc("/", listHandler)
-	http.ListenAndServe(":8080", nil)
 }
