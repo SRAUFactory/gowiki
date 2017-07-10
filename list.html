@@ -4,5 +4,10 @@
     </head>
     <body>
         <h1>リスト</h1>
+        <ul>
+            {{range .Pages}}
+            <li>{{.}}</li>
+            {{end}}
+        </ul>
     </body>
 </html>

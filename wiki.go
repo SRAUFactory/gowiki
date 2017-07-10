@@ -4,11 +4,16 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 )
 
 type Page struct {
 	Title string
 	Body  []byte
+}
+
+type PageList struct {
+	Pages []string
 }
 
 func (p *Page) save() error {
@@ -23,6 +28,24 @@ func loadPage(title string) (*Page, error) {
 		return nil, err
 	}
 	return &Page{Title: title, Body: body}, nil
+}
+
+func dirwalk(dir string) []string {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		panic(err)
+	}
+
+	var paths []string
+	for _, file := range files {
+		if file.IsDir() {
+			paths = append(paths, dirwalk(filepath.Join(dir, file.Name()))...)
+			continue
+		}
+		paths = append(paths, filepath.Join(dir, file.Name()))
+	}
+
+	return paths
 }
 
 const lenPath = len("/view/")
@@ -64,8 +87,9 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	t := template.Must(template.ParseFiles("list.html"))
-	p := &Page{Title: "テスト", Body: []byte("テスト")}
-	err := t.Execute(w, p)
+	files := dirwalk("./")
+	pl := &PageList{Pages: files}
+	err := t.Execute(w, pl)
 	if err != nil {
 		panic(err)
 	}
