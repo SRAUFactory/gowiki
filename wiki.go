@@ -38,8 +38,7 @@ func dirwalk(dir string) []string {
 
 	var paths []string
 	for _, file := range files {
-		if file.IsDir() {
-			paths = append(paths, dirwalk(filepath.Join(dir, file.Name()))...)
+		if file.IsDir() || filepath.Ext(file.Name()) != ".txt" {
 			continue
 		}
 		paths = append(paths, filepath.Join(dir, file.Name()))
