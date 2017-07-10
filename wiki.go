@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"regexp"
 )
 
 type Page struct {
@@ -38,10 +39,13 @@ func dirwalk(dir string) []string {
 
 	var paths []string
 	for _, file := range files {
-		if file.IsDir() || filepath.Ext(file.Name()) != ".txt" {
+		ext := filepath.Ext(file.Name())
+		if file.IsDir() || ext != ".txt" {
 			continue
 		}
-		paths = append(paths, filepath.Join(dir, file.Name()))
+		rep := regexp.MustCompile(`.txt$`)
+		e := filepath.Base(rep.ReplaceAllString(file.Name(), ""))
+		paths = append(paths, filepath.Join(dir, e))
 	}
 
 	return paths
