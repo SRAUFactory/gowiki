@@ -2,8 +2,9 @@ package main
 
 import (
 	"html/template"
-	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
 )
@@ -17,14 +18,17 @@ type PageList struct {
 	Pages []string
 }
 
+// テンプレートを起動時にキャッシュ
+var templates = template.Must(template.ParseFiles("view.html", "edit.html", "list.html"))
+
 func (p *Page) save() error {
 	filename := p.Title + ".txt"
-	return ioutil.WriteFile(filename, p.Body, 0600)
+	return os.WriteFile(filename, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
 	filename := title + ".txt"
-	body, err := ioutil.ReadFile(filename)
+	body, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +36,7 @@ func loadPage(title string) (*Page, error) {
 }
 
 func getFileList(dir string) []string {
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		panic(err)
 	}
@@ -47,56 +51,68 @@ func getFileList(dir string) []string {
 		e := filepath.Base(rep.ReplaceAllString(file.Name(), ""))
 		paths = append(paths, filepath.Join(dir, e))
 	}
-
 	return paths
 }
 
-const lenPath = len("/view/")
-
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[lenPath:]
+	title := r.PathValue("title") // Go 1.22+
 	p, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
 		return
 	}
-	renderTemplate(w, "view", p)
+	renderTemplate(w, "view.html", p)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[lenPath:]
+	title := r.PathValue("title") // Go 1.22+
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
 	}
-	renderTemplate(w, "edit", p)
-}
-
-func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-	t := template.Must(template.ParseFiles(tmpl + ".html"))
-	err := t.Execute(w, data)
-	if err != nil {
-		panic(err)
-	}
+	renderTemplate(w, "edit.html", p)
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[lenPath:]
+	title := r.PathValue("title") // Go 1.22+
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
-	p.save()
+	if err := p.save(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	files := getFileList("./")
 	pl := &PageList{Pages: files}
-	renderTemplate(w, "list", pl)
+	renderTemplate(w, "list.html", pl)
 }
 
-func init() {
-	http.HandleFunc("/view/", viewHandler)
-	http.HandleFunc("/edit/", editHandler)
-	http.HandleFunc("/save/", saveHandler)
-	http.HandleFunc("/", listHandler)
+func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
+	err := templates.ExecuteTemplate(w, tmpl, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func main() {
+	mux := http.NewServeMux()
+
+	// Go 1.22+ ルーティング
+	mux.HandleFunc("GET /view/{title}", viewHandler)
+	mux.HandleFunc("GET /edit/{title}", editHandler)
+	mux.HandleFunc("POST /save/{title}", saveHandler)
+	mux.HandleFunc("GET /", listHandler)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server starting on port %s...", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
+		log.Fatal(err)
+	}
 }
