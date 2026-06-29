@@ -3,10 +3,18 @@
         <title>リストページ</title>
     </head>
     <body>
+        <div style="margin-bottom: 20px;">
+            <h2>新規ファイル作成</h2>
+            <form onsubmit="event.preventDefault(); const val = document.getElementById('filename').value.trim(); if(val) { window.location.href='/edit/' + encodeURIComponent(val); }">
+                <input type="text" id="filename" placeholder="ファイル名を入力してください" style="width: 250px;" oninput="document.getElementById('createBtn').disabled = !this.value.trim();">
+                <button type="submit" id="createBtn" disabled>作成</button>
+            </form>
+        </div>
+        <hr>
         <h1>リスト</h1>
         <ul>
             {{range .Pages}}
-            <li><a href="/view/{{.}}">{{.}}.txt</li>
+            <li><a href="/view/{{.}}">{{.}}.txt</a></li>
             {{end}}
         </ul>
     </body>
