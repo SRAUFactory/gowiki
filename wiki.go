@@ -1,17 +1,26 @@
 package main
 
 import (
+	"html"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 type Page struct {
 	Title string
 	Body  []byte
+}
+
+func (p *Page) HTMLBody() template.HTML {
+	escaped := html.EscapeString(string(p.Body))
+	replaced := strings.ReplaceAll(escaped, "\r\n", "<br>")
+	replaced = strings.ReplaceAll(replaced, "\n", "<br>")
+	return template.HTML(replaced)
 }
 
 type PageList struct {
